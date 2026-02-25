@@ -1,0 +1,212 @@
+[
+  {
+    "id": "12eca672-21d5-415a-a965-1f2727cee4b9",
+    "name": "Brian Purchase",
+    "title": "BP",
+    "dept": "Leadership",
+    "x": 609,
+    "y": 29,
+    "note": "",
+    "managerId": null
+  },
+  {
+    "id": "52afa0dc-1303-463c-b37d-a79343538a00",
+    "name": "Tessa",
+    "title": "Buying + Marketing coordination",
+    "dept": "",
+    "managerId": "12eca672-21d5-415a-a965-1f2727cee4b9",
+    "x": 609,
+    "y": 251,
+    "note": ""
+  },
+  {
+    "id": "21f8f7af-d927-4dba-a2d9-7931d2866e7e",
+    "name": "Jenna",
+    "title": "Merchandising",
+    "dept": "Buying",
+    "managerId": "12eca672-21d5-415a-a965-1f2727cee4b9",
+    "x": 338,
+    "y": 258,
+    "note": ""
+  },
+  {
+    "id": "32e325b9-2daa-43ab-934d-9b47c64d205b",
+    "name": "Bobby",
+    "title": "Merchandising, IT and A/I",
+    "dept": "Merchandising",
+    "managerId": "21f8f7af-d927-4dba-a2d9-7931d2866e7e",
+    "x": 338,
+    "y": 402,
+    "note": ""
+  },
+  {
+    "id": "37c48539-a741-4261-aea1-e1a7da7df5e6",
+    "name": "Ratinder",
+    "title": "Sales",
+    "dept": "Sales",
+    "managerId": "12eca672-21d5-415a-a965-1f2727cee4b9",
+    "x": 46,
+    "y": 255,
+    "note": ""
+  },
+  {
+    "id": "6fd2c9f0-f35b-4245-936a-76f659f08aa8",
+    "name": "Jan",
+    "title": "CFO / Operations",
+    "dept": "Exec",
+    "managerId": "12eca672-21d5-415a-a965-1f2727cee4b9",
+    "x": 1000,
+    "y": 259,
+    "note": ""
+  },
+  {
+    "id": "04acae08-e33e-4e0b-8cc4-85f41614273b",
+    "name": "Debbie",
+    "title": "",
+    "dept": "Ops",
+    "managerId": "6fd2c9f0-f35b-4245-936a-76f659f08aa8",
+    "x": 893,
+    "y": 460,
+    "note": ""
+  },
+  {
+    "id": "4d039eb2-a5c7-44f4-9e62-551d1f2a18ad",
+    "name": "Outside Stores",
+    "title": "Stores/Locations",
+    "dept": "Ops",
+    "managerId": "04acae08-e33e-4e0b-8cc4-85f41614273b",
+    "x": 893,
+    "y": 598,
+    "note": ""
+  },
+  {
+    "id": "c4384c22-9ebb-4009-bb58-d6fd5f52aaba",
+    "name": "Dave",
+    "title": "Operations",
+    "dept": "Ops",
+    "managerId": "6fd2c9f0-f35b-4245-936a-76f659f08aa8",
+    "x": 629,
+    "y": 461,
+    "note": ""
+  },
+  {
+    "id": "2591c2f2-a934-47c3-b19a-67dda5ef7d84",
+    "name": "Rental Dept",
+    "title": "Department",
+    "dept": "Ops",
+    "managerId": "c4384c22-9ebb-4009-bb58-d6fd5f52aaba",
+    "x": 135,
+    "y": 741,
+    "note": ""
+  },
+  {
+    "id": "441bac67-b89c-4015-a26f-10d174901024",
+    "name": "Front Office",
+    "title": "Admin / paperwork",
+    "dept": "Store Ops",
+    "managerId": "c4384c22-9ebb-4009-bb58-d6fd5f52aaba",
+    "x": 386,
+    "y": 742,
+    "note": ""
+  },
+  {
+    "id": "011ab4b8-ee12-4877-a6c5-f5b83c9f9071",
+    "name": "Customer Service",
+    "title": "Department",
+    "dept": "Store Ops",
+    "managerId": "c4384c22-9ebb-4009-bb58-d6fd5f52aaba",
+    "x": 629,
+    "y": 739,
+    "note": ""
+  },
+  {
+    "id": "9b768994-84e2-4b79-8ef6-6a01060febd8",
+    "name": "Tammy",
+    "title": "Accounting Lead",
+    "dept": "Finance",
+    "managerId": "6fd2c9f0-f35b-4245-936a-76f659f08aa8",
+    "x": 1160,
+    "y": 459,
+    "note": ""
+  },
+  {
+    "id": "7f5b4d3a-7247-4de5-92fa-e3c0dad66756",
+    "name": "Accounting Staff",
+    "title": "AP/AR/etc.",
+    "dept": "Finance",
+    "managerId": "9b768994-84e2-4b79-8ef6-6a01060febd8",
+    "x": 1160,
+    "y": 593,
+    "note": ""
+  },
+  {
+    "id": "9d8e9e4d-e8df-4c27-be2a-7b4e51b7a77d",
+    "name": "Mike",
+    "title": "Warehouse / Delivery",
+    "dept": "Logistics",
+    "managerId": "6fd2c9f0-f35b-4245-936a-76f659f08aa8",
+    "x": 1486,
+    "y": 460,
+    "note": ""
+  },
+  {
+    "id": "3f34f619-f201-4906-b6b2-93a4de0e65de",
+    "name": "Two Men in a Truck",
+    "title": "Delivery unit",
+    "dept": "Delivery",
+    "managerId": "9d8e9e4d-e8df-4c27-be2a-7b4e51b7a77d",
+    "x": 1436,
+    "y": 626,
+    "note": ""
+  },
+  {
+    "id": "077ea13f-7cfb-482e-b478-39d70b6e68b5",
+    "name": "Bindu",
+    "title": "Two Men in a Truck",
+    "dept": "Delivery",
+    "managerId": "3f34f619-f201-4906-b6b2-93a4de0e65de",
+    "x": 1436,
+    "y": 769,
+    "note": ""
+  },
+  {
+    "id": "b6ca054e-9192-470d-b09e-18d3797dcd03",
+    "name": "Dave Yates",
+    "title": "Delivery Supervisor",
+    "dept": "Delivery",
+    "managerId": "9d8e9e4d-e8df-4c27-be2a-7b4e51b7a77d",
+    "x": 1691,
+    "y": 624,
+    "note": ""
+  },
+  {
+    "id": "e9ad25b2-6d8e-4689-9365-8b51794c49e7",
+    "name": "Chris Clark",
+    "title": "Shipping/Receiving",
+    "dept": "Warehouse",
+    "managerId": "9d8e9e4d-e8df-4c27-be2a-7b4e51b7a77d",
+    "x": 1940,
+    "y": 626,
+    "note": ""
+  },
+  {
+    "id": "edd0ae4a-f2d4-4c52-9d8b-aaee4d792dba",
+    "name": "Lead Driver",
+    "title": "Lead Driver",
+    "dept": "Delivery",
+    "managerId": "9d8e9e4d-e8df-4c27-be2a-7b4e51b7a77d",
+    "x": 2190,
+    "y": 626,
+    "note": ""
+  },
+  {
+    "id": "d0f9e671-03f1-46eb-8fe5-1d6b488b7cb6",
+    "name": "Sales Team",
+    "title": "",
+    "dept": "",
+    "note": "",
+    "managerId": "37c48539-a741-4261-aea1-e1a7da7df5e6",
+    "x": 46,
+    "y": 398
+  }
+]

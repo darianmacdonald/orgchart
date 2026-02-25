@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Schwartz Furniture Org Chart Editor</title>
+  <style>
+    :root { --cardW: 210px; --cardH: 98px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; }
+    header{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      padding: 12px 14px; border-bottom: 1px solid #e6e6e6; position: sticky; top:0; background:#fff;
+      z-index: 10;
+    }
+    header .left { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    button { padding: 8px 10px; border:1px solid #d0d0d0; background:#fff; border-radius:10px; cursor:pointer; }
+    button:hover { background:#f6f6f6; }
+    .danger { border-color:#f2b4b4; }
+    .hint { color:#555; font-size: 13px; }
+
+    #stageWrap { position: relative; height: calc(100vh - 58px); overflow: auto; background: #fafafa; }
+    #stage{
+      position: relative;
+      width: 2600px; height: 1500px;
+      background-image: radial-gradient(#e9e9e9 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+    svg#lines { position:absolute; inset:0; pointer-events:none; }
+
+    .node{
+      position:absolute; width: var(--cardW); height: var(--cardH);
+      background:#fff; border:1px solid #dcdcdc; border-radius:16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      display:flex; gap:10px; padding:10px; align-items:center;
+      user-select:none;
+    }
+    .node.dragging{ opacity:.85; outline:2px solid #888; }
+    .avatar{
+      width:56px; height:56px; border-radius:14px; background:#f0f0f0;
+      display:flex; align-items:center; justify-content:center; overflow:hidden; flex:0 0 auto;
+      border: 1px solid #e3e3e3;
+    }
+    .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    .meta{ min-width:0; }
+    .name{ font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .title{ font-size:12px; color:#555; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dept{ font-size:11px; color:#777; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+    .pill{
+      font-size:10px; padding:2px 7px; border-radius:999px; border:1px solid #e1e1e1; color:#666;
+      display:inline-block; margin-top:6px;
+    }
+
+    /* Modal */
+    dialog{ border:none; border-radius:16px; width:min(560px, 94vw); padding:0; box-shadow: 0 18px 60px rgba(0,0,0,.2); }
+    dialog::backdrop{ background: rgba(0,0,0,.35); }
+    .modalHead{ padding: 14px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+    .modalBody{ padding: 14px 16px; display:grid; gap:10px; }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row{ display:grid; gap:6px; }
+    label{ font-size: 12px; color:#444; }
+    input, select, textarea{
+      padding: 9px 10px; border:1px solid #d7d7d7; border-radius: 10px; font-size: 14px;
+    }
+    textarea{ resize: vertical; min-height: 60px; }
+    .modalFoot{ padding: 12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
+    .smallNote{ font-size: 12px; color:#666; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left">
+    <button id="btnAdd">+ Add person</button>
+    <button id="btnAuto">Auto layout (simple)</button>
+    <button id="btnExport">Export JSON</button>
+    <button id="btnImport">Import JSON</button>
+    <button id="btnPdf">Export PDF</button>
+    <span class="hint">Click a card to edit. Drag cards to reposition. Images are optional.</span>
+  </div>
+  <div class="left">
+    <button id="btnResetSeed">Reset to Schwartz current-state</button>
+    <button id="btnClear" class="danger">Clear</button>
+  </div>
+</header>
+
+<div id="stageWrap">
+  <div id="stage">
+    <svg id="lines"></svg>
+  </div>
+</div>
+
+<dialog id="editor">
+  <form method="dialog" id="editForm">
+    <div class="modalHead">
+      <div style="font-weight:700">Edit person / role</div>
+      <button value="cancel" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modalBody">
+      <input type="hidden" id="pid" />
+      <div class="grid2">
+        <div class="row">
+          <label for="pname">Name (or team)</label>
+          <input id="pname" required />
+          <div class="smallNote">Use team names too (e.g., “Delivery Teams”, “Warehouse”).</div>
+        </div>
+        <div class="row">
+          <label for="ptitle">Role / Title</label>
+          <input id="ptitle" placeholder="e.g., CFO/COO, Operations, Customer Service" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="row">
+          <label for="pdept">Department (optional)</label>
+          <input id="pdept" placeholder="e.g., Sales, Ops, Finance" />
+        </div>
+        <div class="row">
+          <label for="pmanager">Reports to</label>
+          <select id="pmanager"></select>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="row">
+          <label for="pimg">Photo (optional)</label>
+          <input id="pimg" type="file" accept="image/*" />
+        </div>
+        <div class="row">
+          <label for="pnote">Notes (optional)</label>
+          <textarea id="pnote" placeholder="Anything you want to remember about this role…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="modalFoot">
+      <button id="btnDelete" class="danger" value="delete" type="button">Delete</button>
+      <button value="cancel">Cancel</button>
+      <button id="btnSave" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<script>
+  // =============================
+  // Data model:
+  // { id, name, title, dept, note, managerId (null top), x, y, imgDataUrl }
+  // =============================
+  const STORAGE_KEY = "schwartz_orgchart_current_v1";
+  let people = load() ?? seedSchwartzCurrent();
+
+  const stage = document.getElementById("stage");
+  const linesSvg = document.getElementById("lines");
+
+  const editor = document.getElementById("editor");
+  const pid = document.getElementById("pid");
+  const pname = document.getElementById("pname");
+  const ptitle = document.getElementById("ptitle");
+  const pdept = document.getElementById("pdept");
+  const pmanager = document.getElementById("pmanager");
+  const pimg = document.getElementById("pimg");
+  const pnote = document.getElementById("pnote");
+  const btnDelete = document.getElementById("btnDelete");
+
+  // ---------- Seed: your CURRENT-STATE org chart ----------
+  function seedSchwartzCurrent() {
+    const id = () => crypto.randomUUID();
+
+    const brian = id();
+    const buyerMarketing = id();
+    const buyerMerch = id();
+    const bobby = id();
+    const merch = id();
+    const aiit = id();
+    const salesMgr = id();
+
+    const jan = id();
+    const debbie = id();
+    const outsideStores = id();
+
+    const dave = id();
+    const rental = id();
+    const frontOffice = id();
+    const custSvc = id();
+    const rose = id();
+
+    const tammy = id();
+    const acctStaff = id();
+
+    const mike = id();
+    const tmit = id();
+    const bindu = id();
+    const deliveryTeams = id();
+    const warehouse = id();
+    const unknown = id();
+
+    return [
+      { id: brian, name: "Brian Purchase", title: "BP", dept:"Leadership", x: 1080, y: 70 },
+
+      { id: buyerMarketing, name:"Buyer / Marketing", title:"Buying + marketing coordination", dept:"Buying", managerId: brian, x: 760, y: 220 },
+      { id: buyerMerch, name:"Buyer / Merchandising", title:"Buying + merchandising", dept:"Buying", managerId: brian, x: 1020, y: 220 },
+
+      { id: bobby, name:"Bobby", title:"Merchandising", dept:"Merchandising", managerId: buyerMerch, x: 1020, y: 360 },
+      { id: merch, name:"Merchandising", title:"Team/Function", dept:"Merchandising", managerId: bobby, x: 920, y: 500 },
+      { id: aiit, name:"AI & IT", title:"(As-is in chart)", dept:"Systems", managerId: bobby, x: 1120, y: 500 },
+
+      { id: salesMgr, name:"Sales Manager", title:"Sales", dept:"Sales", managerId: brian, x: 1320, y: 220 },
+
+      { id: jan, name:"Jan", title:"CFO / COO", dept:"Exec", managerId: brian, x: 1080, y: 640 },
+
+      { id: debbie, name:"Debbie", title:"Outside Stores Lead", dept:"Ops", managerId: jan, x: 780, y: 820 },
+      { id: outsideStores, name:"Outside Stores", title:"Stores/Locations", dept:"Ops", managerId: debbie, x: 780, y: 960 },
+
+      { id: dave, name:"Dave", title:"Operations", dept:"Ops", managerId: jan, x: 1040, y: 820 },
+      { id: rental, name:"Rental Dept", title:"Department", dept:"Ops", managerId: dave, x: 820, y: 960 },
+      { id: frontOffice, name:"Front Office", title:"Admin / paperwork", dept:"Store Ops", managerId: dave, x: 1040, y: 960 },
+      { id: custSvc, name:"Customer Service", title:"Department", dept:"Store Ops", managerId: dave, x: 1260, y: 960 },
+      { id: rose, name:"Rose", title:"Customer Service", dept:"Store Ops", managerId: custSvc, x: 1260, y: 1100 },
+
+      { id: tammy, name:"Tammy", title:"Accounting Lead", dept:"Finance", managerId: jan, x: 1320, y: 820 },
+      { id: acctStaff, name:"Accounting Staff", title:"AP/AR/etc.", dept:"Finance", managerId: tammy, x: 1320, y: 960 },
+
+      { id: mike, name:"Mike", title:"Warehouse / Delivery", dept:"Logistics", managerId: jan, x: 1560, y: 820 },
+      { id: tmit, name:"Two Men in a Truck", title:"Delivery unit", dept:"Delivery", managerId: mike, x: 1460, y: 960 },
+      { id: bindu, name:"Bindu", title:"Two Men in a Truck", dept:"Delivery", managerId: tmit, x: 1460, y: 1100 },
+      { id: deliveryTeams, name:"Delivery Teams", title:"Team", dept:"Delivery", managerId: mike, x: 1660, y: 960 },
+      { id: warehouse, name:"Warehouse", title:"Team", dept:"Warehouse", managerId: mike, x: 1560, y: 1100 },
+      { id: unknown, name:"(TBD)", title:"Additional function", dept:"Logistics", managerId: mike, x: 1760, y: 1100 },
+    ];
+  }
+
+  // ---------- Rendering ----------
+  function render() {
+    stage.querySelectorAll(".node").forEach(n => n.remove());
+    linesSvg.setAttribute("width", stage.clientWidth);
+    linesSvg.setAttribute("height", stage.clientHeight);
+    linesSvg.setAttribute("viewBox", `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
+    linesSvg.innerHTML = "";
+
+    for (const p of people) {
+      const el = document.createElement("div");
+      el.className = "node";
+      el.dataset.id = p.id;
+      el.style.left = (p.x ?? 50) + "px";
+      el.style.top  = (p.y ?? 50) + "px";
+
+      const safeName = escapeHtml(p.name ?? "");
+      const safeTitle = escapeHtml(p.title ?? "");
+      const safeDept = escapeHtml(p.dept ?? "");
+      const mgrLabel = managerLabel(p);
+
+      el.innerHTML = `
+        <div class="avatar">${p.imgDataUrl ? `<img alt="" src="${p.imgDataUrl}">` : "👤"}</div>
+        <div class="meta">
+          <div class="name" title="${safeName}">${safeName}</div>
+          <div class="title" title="${safeTitle}">${safeTitle}</div>
+          <div class="dept" title="${safeDept || mgrLabel}">${safeDept ? safeDept + " • " : ""}${mgrLabel}</div>
+          <div class="pill">Click to edit</div>
+        </div>
+      `;
+
+      el.addEventListener("click", () => {
+        if (el.classList.contains("dragging")) return;
+        openEditor(p.id);
+      });
+
+      makeDraggable(el);
+      stage.appendChild(el);
+    }
+
+    drawLines();
+    save();
+  }
+
+  function managerLabel(p) {
+    if (!p.managerId) return "Top";
+    const m = people.find(x => x.id === p.managerId);
+    return m ? `Reports to: ${m.name}` : "Reports to: (missing)";
+  }
+
+  function drawLines() {
+    const nodeEls = new Map([...stage.querySelectorAll(".node")].map(el => [el.dataset.id, el]));
+    const center = (el) => ({ x: el.offsetLeft + el.offsetWidth/2, y: el.offsetTop + el.offsetHeight/2 });
+
+    for (const p of people) {
+      if (!p.managerId) continue;
+      const childEl = nodeEls.get(p.id);
+      const mgrEl = nodeEls.get(p.managerId);
+      if (!childEl || !mgrEl) continue;
+
+      const a = center(mgrEl);
+      const b = center(childEl);
+      const midY = (a.y + b.y) / 2;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M ${a.x} ${a.y} L ${a.x} ${midY} L ${b.x} ${midY} L ${b.x} ${b.y}`);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", "#999");
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("stroke-linecap", "round");
+      linesSvg.appendChild(path);
+    }
+  }
+
+  // ---------- Dragging ----------
+  function makeDraggable(el) {
+    let startX=0, startY=0, origX=0, origY=0, dragging=false;
+
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      el.classList.add("dragging");
+      startX = e.clientX; startY = e.clientY;
+      origX = el.offsetLeft; origY = el.offsetTop;
+      el.setPointerCapture(e.pointerId);
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      el.style.left = (origX + dx) + "px";
+      el.style.top  = (origY + dy) + "px";
+      const p = people.find(x => x.id === el.dataset.id);
+      if (p) { p.x = origX + dx; p.y = origY + dy; }
+      drawLines();
+    });
+
+    const end = () => {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("dragging");
+      save();
+    };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+  }
+
+  // ---------- Editor ----------
+  function openEditor(personId) {
+    const p = people.find(x => x.id === personId);
+    if (!p) return;
+
+    pid.value = p.id;
+    pname.value = p.name ?? "";
+    ptitle.value = p.title ?? "";
+    pdept.value = p.dept ?? "";
+    pnote.value = p.note ?? "";
+    pimg.value = "";
+
+    // Build manager dropdown
+    pmanager.innerHTML = "";
+    const none = document.createElement("option");
+    none.value = "";
+    none.textContent = "(No manager / Top)";
+    pmanager.appendChild(none);
+
+    for (const optP of people) {
+      if (optP.id === p.id) continue;
+      const o = document.createElement("option");
+      o.value = optP.id;
+      o.textContent = optP.name;
+      pmanager.appendChild(o);
+    }
+    pmanager.value = p.managerId ?? "";
+
+    btnDelete.onclick = () => {
+      if (!confirm(`Delete "${p.name}"?`)) return;
+      people = people.filter(x => x.id !== p.id);
+      // Orphan direct reports to Top (so you don't lose them)
+      for (const q of people) if (q.managerId === p.id) q.managerId = null;
+      editor.close();
+      render();
+      loadCanonicalOrg();
+
+    };
+
+    editor.showModal();
+  }
+
+  document.getElementById("editForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const p = people.find(x => x.id === pid.value);
+    if (!p) return;
+
+    p.name = pname.value.trim();
+    p.title = ptitle.value.trim();
+    p.dept = pdept.value.trim();
+    p.note = pnote.value.trim();
+    p.managerId = pmanager.value || null;
+
+    const file = pimg.files?.[0];
+    if (file) p.imgDataUrl = await fileToDataUrl(file);
+
+    editor.close();
+    render();
+  });
+
+  // ---------- Toolbar ----------
+  document.getElementById("btnAdd").addEventListener("click", () => {
+    const newP = { id: crypto.randomUUID(), name:"New Person", title:"", dept:"", note:"", managerId:null, x: 80, y: 80 };
+    people.push(newP);
+    render();
+    openEditor(newP.id);
+  });
+
+  document.getElementById("btnAuto").addEventListener("click", () => {
+    simpleAutoLayout();
+    render();
+  });
+
+  document.getElementById("btnClear").addEventListener("click", () => {
+    if (!confirm("Clear the org chart? This removes everyone.")) return;
+    people = [];
+    save();
+    render();
+  });
+
+  document.getElementById("btnResetSeed").addEventListener("click", () => {
+    if (!confirm("Reset to the Schwartz current-state org? This overwrites your current chart.")) return;
+    people = seedSchwartzCurrent();
+    save();
+    render();
+  });
+
+  document.getElementById("btnExport").addEventListener("click", async () => {
+    const json = JSON.stringify(people, null, 2);
+    await navigator.clipboard.writeText(json);
+    alert("Copied org JSON to clipboard.");
+  });
+
+  document.getElementById("btnImport").addEventListener("click", () => {
+    const json = prompt("Paste org JSON here:");
+    if (!json) return;
+    try {
+      const data = JSON.parse(json);
+      if (!Array.isArray(data)) throw new Error("JSON must be an array");
+      people = data;
+      save();
+      render();
+    } catch (err) {
+      alert("Import failed: " + err.message);
+    }
+  });
+
+
+document.getElementById("btnPdf").addEventListener("click", async () => {
+  const { jsPDF } = window.jspdf;
+
+  // Capture the full stage, not just the visible viewport
+  const stageEl = document.getElementById("stage");
+
+  // Temporarily hide the grid background if you don't want it in the PDF
+  // const oldBg = stageEl.style.backgroundImage;
+  // stageEl.style.backgroundImage = "none";
+
+  const canvas = await html2canvas(stageEl, {
+    backgroundColor: "#ffffff",
+    scale: 2,          // higher = sharper
+    useCORS: true
+  });
+
+  // stageEl.style.backgroundImage = oldBg;
+
+  const imgData = canvas.toDataURL("image/png");
+
+  // Create PDF sized to the captured image (in pixels -> points)
+  const pdf = new jsPDF({
+    orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+    unit: "pt",
+    format: [canvas.width, canvas.height]
+  });
+
+  pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+  pdf.save("org-chart.pdf");
+});
+
+  function simpleAutoLayout() {
+    // Simple level-based layout; good enough for getting started.
+    const level = new Map();
+    const getLevel = (id) => {
+      if (level.has(id)) return level.get(id);
+      const p = people.find(x => x.id === id);
+      if (!p || !p.managerId) { level.set(id, 0); return 0; }
+      const l = getLevel(p.managerId) + 1;
+      level.set(id, l);
+      return l;
+    };
+    people.forEach(p => getLevel(p.id));
+
+    const levels = {};
+    for (const p of people) {
+      const l = level.get(p.id) ?? 0;
+      (levels[l] ??= []).push(p);
+    }
+    const xStart = 220, yStart = 80, xGap = 260, yGap = 190;
+    Object.keys(levels).sort((a,b)=>+a-+b).forEach((lk) => {
+      const l = +lk;
+      const arr = levels[l];
+      arr.forEach((p, i) => {
+        p.x = xStart + i * xGap;
+        p.y = yStart + l * yGap;
+      });
+    });
+  }
+
+  // ---------- Utilities ----------
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(people)); }
+  function load() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  // Initial render
+  render();
+  window.addEventListener("resize", () => render());
+  async function loadCanonicalOrg() {
+  try {
+    const res = await fetch("./orgchart.json", { cache: "no-store" });
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    if (!Array.isArray(data)) return false;
+
+    people = data;   // overwrite in-memory org
+    save();          // save to localStorage
+    render();        // redraw chart
+    return true;
+  } catch (e) {
+    console.warn("No canonical org loaded:", e);
+    return false;
+  }
+}
+
+</script>
+</body>
+</html>
