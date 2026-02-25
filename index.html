@@ -144,10 +144,27 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <script>
+const API = "https://orgchart-api.darianmacdonald.workers.dev/api/orgchart";
   // =============================
   // Data model:
   // { id, name, title, dept, note, managerId (null top), x, y, imgDataUrl }
   // =============================
+
+ async function loadFromCloud() {
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+
+    if (data && Array.isArray(data) && data.length > 0) {
+      people = data;
+      render();
+      console.log("Loaded from cloud ☁️");
+    }
+  } catch (e) {
+    console.log("No cloud data yet");
+  }
+}
+
   const STORAGE_KEY = "schwartz_orgchart_current_v1";
   let people = load() ?? seedSchwartzCurrent();
 
@@ -429,8 +446,11 @@
   document.getElementById("btnExport").addEventListener("click", async () => {
     const json = JSON.stringify(people, null, 2);
     await navigator.clipboard.writeText(json);
-    alert("Copied org JSON to clipboard.");
-  });
+
+    await saveToCloud();  // ← THIS LINE ADDED
+
+    alert("Copied org JSON to clipboard & saved to cloud ☁️");
+});
 
   document.getElementById("btnImport").addEventListener("click", () => {
     const json = prompt("Paste org JSON here:");
@@ -548,6 +568,23 @@ document.getElementById("btnPdf").addEventListener("click", async () => {
     return false;
   }
 }
+
+async function loadFromCloud() {
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+
+    if (data && Array.isArray(data) && data.length > 0) {
+      people = data;
+      render();
+      console.log("Loaded from cloud ☁️");
+    }
+  } catch (e) {
+    console.log("No cloud data yet");
+  }
+}
+
+loadFromCloud();
 
 </script>
 </body>
